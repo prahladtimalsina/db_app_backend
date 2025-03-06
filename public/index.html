@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite3 CRUD with Node.js</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        form { margin-bottom: 20px; }
+        input, button { margin: 5px; padding: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+    <h2>Add New User</h2>
+    <form id="userForm">
+        <input type="text" id="first_name" placeholder="First Name" required>
+        <input type="text" id="last_name" placeholder="Last Name" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="text" id="address" placeholder="Address" required>
+        <input type="text" id="contact_number" placeholder="Contact Number" required>
+        <button type="submit">Add User</button>
+    </form>
+
+    <h2>Users List</h2>
+    <button onclick="fetchUsers()">Refresh List</button>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>Address</th>
+                <th>Contact Number</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="usersTable"></tbody>
+    </table>
+
+    <script>
+        document.getElementById('userForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const first_name = document.getElementById('first_name').value;
+            const last_name = document.getElementById('last_name').value;
+            const email = document.getElementById('email').value;
+            const address = document.getElementById('address').value;
+            const contact_number = document.getElementById('contact_number').value;
+
+            fetch('/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ first_name, last_name, email, address, contact_number })
+            })
+            .then(response => response.json())
+            .then(() => {
+                alert('User added successfully!');
+                fetchUsers(); // Refresh user list
+                document.getElementById('userForm').reset();
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        function fetchUsers() {
+            fetch('/users')
+            .then(response => response.json())
+            .then(users => {
+                const usersTable = document.getElementById('usersTable');
+                usersTable.innerHTML = ''; 
+
+                users.forEach(user => {
+                    const row = `<tr id="user-${user.id}">
+                        <td>${user.id}</td>
+                        <td contenteditable="true" onBlur="updateUser(${user.id}, 'first_name', this.innerText)">${user.first_name}</td>
+                        <td contenteditable="true" onBlur="updateUser(${user.id}, 'last_name', this.innerText)">${user.last_name}</td>
+                        <td contenteditable="true" onBlur="updateUser(${user.id}, 'email', this.innerText)">${user.email}</td>
+                        <td contenteditable="true" onBlur="updateUser(${user.id}, 'address', this.innerText)">${user.address}</td>
+                        <td contenteditable="true" onBlur="updateUser(${user.id}, 'contact_number', this.innerText)">${user.contact_number}</td>
+                        <td>
+                            <button onclick="deleteUser(${user.id})">Delete</button>
+                        </td>
+                    </tr>`;
+                    usersTable.innerHTML += row;
+                });
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function updateUser(id, field, value) {
+            fetch(`/users/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [field]: value })
+            })
+            .then(response => response.json())
+            .then(() => {
+                console.log('User updated');
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function deleteUser(id) {
+            fetch(`/users/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(() => {
+                alert('User deleted successfully!');
+                fetchUsers();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        fetchUsers();
+    </script>
+
+</body>
+</html>

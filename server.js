@@ -1,12 +1,15 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
+const path = require('path');
 
 const app = express();
 const PORT = 3000;
 
 // Middleware
 app.use(bodyParser.json());
+// Serve static files from 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Connect to SQLite Database
 const db = new sqlite3.Database('./database.db', (err) => {
